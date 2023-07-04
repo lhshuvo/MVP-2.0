@@ -6,7 +6,6 @@ from werkzeug.utils import secure_filename
 import os
 from fake_useragent import UserAgent
 from bs4 import BeautifulSoup
-from tqdm import tqdm
 import warnings
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = './'
@@ -40,7 +39,7 @@ def myform():
                         continue
                     headers = {'User-Agent': ua.random}
                     futures.append(executor.submit(requests.get, link, headers=headers))
-                for i, future in enumerate(tqdm(futures)):
+                for i, future in enumerate(futures):
                     try:
                         response = future.result()
                         if isinstance(response, requests.Response):
