@@ -9,13 +9,10 @@ from bs4 import BeautifulSoup
 from tqdm import tqdm
 import warnings
 import uuid
-
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = './'
-
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ['xlsx', 'xls']
-
 @app.route('/', methods=['GET', 'POST'])
 def myform():
     if request.method == 'POST':
