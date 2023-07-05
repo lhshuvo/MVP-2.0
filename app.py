@@ -8,10 +8,14 @@ from fake_useragent import UserAgent
 from bs4 import BeautifulSoup
 from tqdm import tqdm
 import warnings
+import uuid
+
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = './'
+
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ['xlsx', 'xls']
+
 @app.route('/', methods=['GET', 'POST'])
 def myform():
     if request.method == 'POST':
@@ -29,7 +33,7 @@ def myform():
             responsess = []
             mail_validation = {}
             ua = UserAgent()
-            with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
+            with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
                 futures = []
                 for i, row in df.iterrows():
                     email = str(row['DirectEmail'])
@@ -67,8 +71,8 @@ def myform():
                         responsess.append("Request Error")
             df["valid_email"] = pd.Series(mail_validation)
             df["Response_Type"] = pd.Series(responsess)
-            filename1 = 'Outputfile.xlsx'
-            df.to_excel(filename1)
+            filename1 = str(uuid.uuid4()) + '.xlsx'  
+            df.to_excel(os.path.join(app.config['UPLOAD_FOLDER'], filename1))
             summary = {
                 "total": len(df),
                 "valid_emails": len(df.loc[df['valid_email'] == 1]),
@@ -77,8 +81,10 @@ def myform():
             }
             return render_template('summary.html', summary=summary)
     return render_template('index.html')
+
 @app.route('/download')
 def download_file():
     return send_from_directory(app.config['UPLOAD_FOLDER'], 'Outputfile.xlsx', as_attachment=True)
+
 if __name__ == '__main__':
     app.run(port=1234, debug=True)
