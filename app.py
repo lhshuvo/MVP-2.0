@@ -9,8 +9,9 @@ from bs4 import BeautifulSoup
 from tqdm import tqdm
 import warnings
 import uuid
+from pathlib import Path
 app = Flask(__name__)
-app.config['UPLOAD_FOLDER'] = './'
+app.config['UPLOAD_FOLDER'] = str(Path.home())  # Set upload folder to user's home directory
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ['xlsx', 'xls']
 @app.route('/', methods=['GET', 'POST'])
@@ -68,9 +69,11 @@ def myform():
                         responsess.append("Request Error")
             df["valid_email"] = pd.Series(mail_validation)
             df["Response_Type"] = pd.Series(responsess)
-            filename1 = str(uuid.uuid4()) + '.xlsx'  
-            df.to_excel(os.path.join(app.config['UPLOAD_FOLDER'], filename1))
+            filename1 = str(uuid.uuid4()) + '.xlsx'
+            output_path = os.path.join(app.config['UPLOAD_FOLDER'], filename1)
+            df.to_excel(output_path)
             summary = {
+                "filename": filename1,
                 "total": len(df),
                 "valid_emails": len(df.loc[df['valid_email'] == 1]),
                 "invalid_emails": len(df.loc[df['valid_email'] == 0]),
@@ -78,10 +81,8 @@ def myform():
             }
             return render_template('summary.html', summary=summary)
     return render_template('index.html')
-
-@app.route('/download')
-def download_file():
-    return send_from_directory(app.config['UPLOAD_FOLDER'], 'Outputfile.xlsx', as_attachment=True)
-
+@app.route('/download/<filename>')
+def download_file(filename):
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename, as_attachment=True)
 if __name__ == '__main__':
     app.run(port=1234, debug=True)
